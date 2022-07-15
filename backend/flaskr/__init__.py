@@ -1,5 +1,8 @@
 import os
-from flask import Flask, request, abort, jsonify
+from pickle import APPEND
+from sre_constants import CATEGORY
+from urllib import response
+from flask import Flask, request, abort, jsonify, app
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
@@ -7,27 +10,79 @@ import random
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
+CATEGORY_ALL = 0
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
 
+
     """
     @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
+    @app.route('/foo', methods=['GET'])
+    def response():
+     response = Flask.jsonify({'app': 'resources'})
+     response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+  # cors to all all origin
+@app.route()
+def add_cors_headers(response):
+        r = request.referrer[:-1]
+        if r in response:
+         response.headers.add('Access-Control-Allow-Origin', r)
+         response.headers.add('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
+        return response   
 
-    """
-    @TODO: Use the after_request decorator to set Access-Control-Allow
-    """
+    # endpoint to get categories
+@app.route('/categories' , method=['GET'])
+def retrieve_categories(self):
+    try:
+            categories = Category.query(Category.category_id == self.id)\
+      .group_by(Category.id) \
+      .order_by(Category.category_id) \
+      .all()
+            return jsonify({
+              'success': True,
+              'categories': {
+                category.id: category.type for category in categories
+              }
+            })
+    except Exception:
+            abort(422)
 
-    """
-    @TODO:
-    Create an endpoint to handle GET requests
-    for all available categories.
-    """
+def paginate_questions(request, selection):
+  page = request.args.get('page', 1, type=int)
+  start = (page - 1) * QUESTIONS_PER_PAGE
+  end = start + QUESTIONS_PER_PAGE
 
+ # GET QUESTIONS
+@app.route('/questions')
+def retrieve_questions(self):
+    try:
+      
+        selection = question.query(question.question_id == self.id)\
+      .group_by(Category.id) \
+      .order_by(Category.category_id) \
+      .all()
+        current_questions = paginate_questions(request, selection)
 
+        categories = Category.query.all()
+ 
+      return jsonify({
+      'success': True,
+      'questions': current_questions,{
+      'total_questions': len(selection),
+      'categories': [category.type for category in categories],
+      'current_category': None
+      }
+    })
+ except Exception:
+         if len(current_questions) == 0:
+        abort(404)
+     
     """
     @TODO:
     Create an endpoint to handle GET requests for questions,
@@ -40,6 +95,10 @@ def create_app(test_config=None):
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
     """
+
+
+
+
 
     """
     @TODO:
